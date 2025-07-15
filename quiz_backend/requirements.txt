@@ -1,0 +1,29 @@
+fastapi
+uvicorn
+
+# Database
+SQLAlchemy
+asyncpg
+psycopg2-binary  # for Alembic migrations
+
+# Auth
+python-jose
+passlib[bcrypt]
+python-dotenv
+
+# Pydantic
+pydantic
+pydantic-settings
+
+# WebSockets
+websockets
+
+# Optional: Alembic for migrations
+alembic
+
+# Optional: CORS
+fastapi[all]
+
+# Testing
+pytest
+httpx
