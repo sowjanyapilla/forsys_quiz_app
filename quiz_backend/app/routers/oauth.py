@@ -25,6 +25,8 @@ router = APIRouter()
 # Load Google OAuth client credentials from environment variables
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+FRONTEND_URL = os.getenv("FRONTEND_URL")
+VITE_API_BASE_URL = os.getenv("VITE_API_BASE_URL")
 
 # Configure OAuth with client credentials
 config = Config(environ={
@@ -46,7 +48,7 @@ oauth.register(
 @router.get("/auth/login")
 async def login(request: Request):
     # Define the redirect URI after Google authentication
-    redirect_uri = "http://127.0.0.1:8000/auth/google/callback"
+    redirect_uri = f"{VITE_API_BASE_URL}/auth/google/callback"
     print(">>> [LOGIN] Before redirect. Session state:", request.session.get("state"))
      # Redirect user to Google login page
     return await oauth.google.authorize_redirect(request, redirect_uri)
@@ -94,5 +96,5 @@ async def auth_callback(request: Request, db: AsyncSession = Depends(get_db)):
     })
 
      # Redirect to frontend with token and user data in query params
-    redirect_url = f"http://127.0.0.1:8080/oauth-callback?{query}"
+    redirect_url = f"{FRONTEND_URL}/oauth-callback?{query}"
     return RedirectResponse(url=redirect_url)
