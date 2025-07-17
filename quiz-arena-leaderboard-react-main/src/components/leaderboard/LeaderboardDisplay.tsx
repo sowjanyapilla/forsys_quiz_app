@@ -2,7 +2,7 @@ import { CurrentUserPerformance } from './CurrentUserPerformance';
 import { TopPerformers } from './TopPerformers';
 import { Legend } from './Legend';
 import { ParticipantList } from './ParticipantList';
-import { formatTime } from "@/utils/time"; // ✅ Correctly importing from utils
+import { formatTime } from "@/utils/time"; 
 
 export interface LeaderboardEntry {
   rank?: number;

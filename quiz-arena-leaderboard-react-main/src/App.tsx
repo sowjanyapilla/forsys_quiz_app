@@ -20,6 +20,8 @@ import NotFound from '@/pages/NotFound';
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import ShowFeedbacks from './pages/admin/ShowFeedbacks';
+import OAuthCallback from '@/pages/auth/OAuthCallback';
+
 
 
 function App() {
@@ -30,10 +32,10 @@ function App() {
           <div className="min-h-screen bg-background text-foreground transition-colors">
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
+              {/* <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password/:token" element={<ResetPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} /> */}
               
               {/* User Routes */}
               <Route
@@ -72,6 +74,7 @@ function App() {
               />
 
               <Route path="/admin/quiz-status/:quiz_id" element={<QuizStatus />} />
+              <Route path="/oauth-callback" element={<OAuthCallback />} />
               
               {/* Quiz Routes */}
               <Route

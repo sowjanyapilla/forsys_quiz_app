@@ -117,6 +117,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(null);
     localStorage.removeItem('quiz_token');
     localStorage.removeItem('quiz_user');
+
+    window.location.replace("/");
   };
 
   const value: AuthContextType = {

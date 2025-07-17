@@ -1,105 +1,35 @@
+# Imports for FastAPI and SQLAlchemy
 from app.utils.websocket_manager import manager
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession, session
 from sqlalchemy.future import select
-from datetime import datetime, timezone
-from ..database import get_db
-from ..models.submission import Submission
-from ..schemas.submission import SubmissionCreate, SubmissionOut
-from ..models.quiz import Quiz
-from ..models.user import User
-
-router = APIRouter(prefix="/submissions", tags=["submissions"])
-
-from fastapi import HTTPException
-from uuid import UUID
 from sqlalchemy import select
-from fastapi import status 
-from ..dependencies import get_current_user
-
-
-# @router.post("/", response_model=SubmissionOut)
-# async def create_submission(submission: SubmissionCreate):
-#     async with get_db() as session:
-#         # Find the quiz based on quiz_id
-#         quiz_query = await session.execute(select(Quiz).where(Quiz.id == submission.quiz_id))
-#         quiz = quiz_query.scalar_one_or_none()
-        
-#         if not quiz:
-#             raise HTTPException(
-#                 status_code=400,
-#                 detail="Quiz not found."
-#             )
-        
-#         # Ensure quiz has a valid start time (if it's required)
-#         if not quiz.started_at:
-#             raise HTTPException(
-#                 status_code=400,
-#                 detail="Quiz does not have a valid start time."
-#             )
-        
-#         # Set the current time as submission time (submitted_at)
-#         submitted_at = datetime.utcnow()
-
-#         # Calculate the time taken based on the difference between quiz start and submission time
-#         time_taken = (submitted_at - quiz.started_at).total_seconds()
-
-#         # Ensure the calculated time is non-negative
-#         if time_taken < 0:
-#             raise HTTPException(
-#                 status_code=400,
-#                 detail="Invalid time calculation. Please try again."
-#             )
-
-#         # Create the submission record
-#         db_sub = Submission(
-#             user_id=submission.user_id,
-#             quiz_id=submission.quiz_id,
-#             score=submission.score,
-#             correct_count=submission.correct_count,
-#             incorrect_count=submission.incorrect_count,
-#             not_attempted_count=submission.not_attempted_count,
-#             time_taken=time_taken,  # Store the calculated time_taken
-#             submitted_at=submitted_at,  # Store the submission time
-#         )
-
-#         # Save the submission to the database
-#         session.add(db_sub)
-#         await session.commit()
-#         await session.refresh(db_sub)
-
-#         # Broadcast to connected WebSocket clients
-#         await manager.broadcast(
-#             f"New submission for quiz {submission.quiz_id}, please refresh leaderboard"
-#         )
-
-#         return db_sub
-
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
 from sqlalchemy import cast, Integer
+from uuid import UUID
+from dateutil.parser import parse as parse_datetime
 from datetime import datetime, timezone
 
+# Local module imports
 from ..database import get_db
 from ..models.submission import Submission
+from ..schemas.submission import SubmissionCreate, SubmissionOut
 from ..models.quiz import Quiz
 from ..models.user import User
-from ..schemas.submission import SubmissionCreate, SubmissionOut
-from ..utils.websocket_manager import manager
 from ..dependencies import get_current_user
-from dateutil.parser import parse as parse_datetime
+from ..utils.websocket_manager import manager
 
+# Create a FastAPI router for submission-related endpoints
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 
 
+#for submission create, finalize a started quiz, Calculates time_taken from started_at, return full submission details with metadata
 @router.post("/", response_model=SubmissionOut)
 async def submit_quiz(
     submission: SubmissionCreate,
     session: AsyncSession = Depends(get_db),
     user=Depends(get_current_user)
 ):
-    # Fetch existing submission
+     # Fetch the started submission for the user and quiz
     submission_query = await session.execute(
         select(Submission).where(
             Submission.quiz_id == submission.quiz_id,
@@ -111,7 +41,7 @@ async def submit_quiz(
     if not sub:
         raise HTTPException(status_code=404, detail="No started submission found for this quiz")
 
-    # calculate time_taken
+     # Parse or reuse the started_at timestamp, calculate time_taken
     submitted_at = datetime.now(timezone.utc)
     sub.submitted_at = submitted_at
     print(f"🧪 submission.started_at received: {submission.started_at} ({type(submission.started_at)})")
@@ -127,18 +57,19 @@ async def submit_quiz(
     time_taken = (submitted_at - sub.started_at).total_seconds()
     sub.time_taken = time_taken
 
-    # update fields
+    # Update scoring-related fields
     sub.score = submission.score
     sub.correct_count = submission.correct_count
     sub.incorrect_count = submission.incorrect_count
     sub.not_attempted_count = submission.not_attempted_count
 
+    # Commit changes to DB
     session.add(sub)
     print("Setting started_at to:", sub.started_at)
     await session.commit()
     await session.refresh(sub)
 
-    # fetch related user and quiz for response
+    # Fetch related user and quiz for response metadata
     user_query = await session.execute(select(User).where(User.id == sub.user_id))
     user_obj = user_query.scalar_one_or_none()
 
@@ -148,6 +79,7 @@ async def submit_quiz(
     if not user_obj or not quiz_obj:
         raise HTTPException(status_code=400, detail="Related user or quiz not found")
 
+    # Broadcast update via WebSocket (e.g., leaderboard refresh)
     await manager.broadcast(
         f"New submission for quiz {submission.quiz_id}, please refresh leaderboard"
     )
@@ -194,6 +126,7 @@ async def list_submissions(
             .order_by(Submission.submitted_at.desc())
         )
 
+        # Optional filtering by quiz ID
         if quiz:
             query = query.where(cast(Submission.quiz_id, Integer) == int(quiz))
 
@@ -265,6 +198,8 @@ async def start_quiz(
     user=Depends(get_current_user),
     session: AsyncSession = Depends(get_db)
 ):
+    
+    # Creates a new submission record to mark the start of a quiz attempt.
     quiz_query = await session.execute(select(Quiz).where(Quiz.id == quiz_id))
     quiz = quiz_query.scalar_one_or_none()
     if not quiz:

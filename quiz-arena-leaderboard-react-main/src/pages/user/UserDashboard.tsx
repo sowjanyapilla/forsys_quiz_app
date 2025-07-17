@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useNavigate } from "react-router-dom";
 
 interface Quiz {
   id: string;
@@ -21,6 +22,7 @@ interface Quiz {
 
 const UserDashboard = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [assignedQuizzes, setAssignedQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -79,12 +81,15 @@ const UserDashboard = () => {
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <Button
-              onClick={logout}
-              variant="outline"
-              className="dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
-            >
-              Logout
-            </Button>
+      onClick={() => {
+        logout();           // 1. clear auth
+        navigate("/");      // 2. redirect to Index.tsx
+      }}
+      variant="outline"
+      className="dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
+    >
+      Logout
+    </Button>
           </div>
         </div>
       </header>

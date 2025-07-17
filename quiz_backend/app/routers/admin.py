@@ -1,66 +1,49 @@
-# app/routers/admin.py
 
-from fastapi import APIRouter, Depends, HTTPException
+# Import FastAPI modules for routing, dependency injection, and error handling
+from fastapi import APIRouter, Depends, HTTPException, Body, Query
+from fastapi.responses import StreamingResponse
+
+# Import SQLAlchemy modules for async database interaction
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text, delete
+from sqlalchemy import select, text, delete, insert
+
+
+# Import database session dependency
 from ..database import get_db
+
+# Import models for Quiz, User, Submission, etc.
 from ..models.quiz import Quiz
 from ..models.user import User
 from ..models.submission import Submission
-from ..schemas.quiz import QuizCreate
-from ..dependencies import get_current_admin
-from ..schemas.assignment import UserAssignment
-from .. import models
+from app.models.quiz_auto import AutoQuiz 
+from ..models.group_member import GroupMember
 from app.models.quiz_access import QuizAccess
-# admin.py
+from app.models.feedback import Feedback
+from .. import models # For accessing other models dynamically
+
+# Import schemas used for request validation and data transfer
+from ..schemas.quiz import QuizCreate
+from ..schemas.assignment import UserAssignment
+
+# Import dependency for checking if user is an admin
+from ..dependencies import get_current_admin
+
+# Import email sending utility
 from ..email import fast_mail
 from fastapi_mail import MessageSchema, MessageType
+
+# Import standard modules
 from typing import List
-from fastapi import Body
 from datetime import datetime, timezone
 import urllib.parse
-
-# app/routers/admin.py
-from fastapi.responses import StreamingResponse
 import io
 import pandas as pd
-from app.models.feedback import Feedback
-from fastapi import Query
 
-
+# Define router for admin operations with /admin prefix and "admin" tag
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from ..database import get_db
-from ..models.quiz import Quiz
-from ..schemas.quiz import QuizCreate
-from ..models.quiz_auto import AutoQuiz
-from ..models.group_member import GroupMember
-
-router = APIRouter(prefix="/admin", tags=["admin"])
-
-from sqlalchemy import insert
-
-# @router.post("/create-quiz-automated")
-# async def create_quiz_automated(
-#     payload: QuizAutoCreate,
-#     db: AsyncSession = Depends(get_db)
-# ):
-#     try:
-#         quiz = AutoQuiz(
-#             title=payload.title,
-#             questions=payload.questions
-#         ) 
-#         db.add(quiz)
-#         await db.commit()
-#         await db.refresh(quiz)
-#         return {"message": "Automated quiz created successfully", "quiz_id": quiz.id}
-#     except Exception as e:
-#         print("🔥 Error in create_quiz_automated:", repr(e))
-#         raise HTTPException(status_code=500, detail="Failed to create automated quiz.")
-
+# Create a new group and add existing users by their email
 @router.post("/create-group")
 async def create_group(
     name: str = Body(...),
@@ -86,12 +69,14 @@ async def create_group(
     await db.commit()
     return {"message": "Group created", "group_id": group.id}
 
+# List all groups with their ID and name
 @router.get("/groups")
 async def get_groups(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(models.Group))
     groups = result.scalars().all()
     return [{"id": g.id, "name": g.name} for g in groups]
 
+# Get list of member emails in a specific group
 @router.get("/groups/{group_id}/members")
 async def get_group_members(group_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
@@ -102,6 +87,7 @@ async def get_group_members(group_id: int, db: AsyncSession = Depends(get_db)):
     emails = [row[0] for row in result.all()]
     return emails
 
+# Update members of a group using their email addresses
 @router.put("/groups/{group_id}/members")
 async def update_group_members(group_id: int, emails: List[str] = Body(...), db: AsyncSession = Depends(get_db)):
     await db.execute(delete(GroupMember).where(GroupMember.group_id == group_id))
@@ -115,6 +101,7 @@ async def update_group_members(group_id: int, emails: List[str] = Body(...), db:
     await db.commit()
     return {"message": "Group updated"}
 
+# Assign a quiz to all users in a specific group
 @router.post("/assign-quiz-to-group/{quiz_id}/{group_id}")
 async def assign_quiz_to_group(
     quiz_id: int,
@@ -142,7 +129,7 @@ async def assign_quiz_to_group(
     await db.commit()
     return {"message": f"Quiz {quiz_id} assigned to group {group_id}."}
 
-
+# Create a new quiz (manual)
 @router.post("/create-quiz")
 async def create_quiz(
     payload: QuizCreate,
@@ -162,8 +149,8 @@ async def create_quiz(
     await db.refresh(quiz)
     return {"message": "Quiz created successfully", "quiz_id": quiz.id}
 
-from app.models.quiz_auto import AutoQuiz  # ✅ make sure this is imported
-
+ 
+# Get all quiz templates with ID and question count
 @router.get("/quiz-templates")
 async def get_quiz_templates(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(AutoQuiz))
@@ -177,6 +164,7 @@ async def get_quiz_templates(db: AsyncSession = Depends(get_db)):
         for q in quizzes
     ]
 
+# Get specific quiz template with full question details
 @router.get("/quiz-template/{quiz_id}")
 async def get_quiz_template(quiz_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(AutoQuiz).where(AutoQuiz.id == quiz_id))
@@ -189,7 +177,7 @@ async def get_quiz_template(quiz_id: int, db: AsyncSession = Depends(get_db)):
         "questions": quiz.questions or []
     }
 
-
+# List all quizzes (active & inactive) and auto-deactivate expired ones
 @router.get("/quizzes")
 async def list_quizzes(
     db: AsyncSession = Depends(get_db),
@@ -241,7 +229,7 @@ async def list_quizzes(
         ]
     }
 
-
+# Assign a quiz to selected users individually
 @router.post("/assign-quiz/{quiz_id}")
 async def assign_quiz(
     quiz_id: int,
@@ -260,6 +248,7 @@ async def assign_quiz(
     return {"message": f"Quiz {quiz_id} assigned to selected users."}
 
 
+# Manually toggle a quiz's active status (on/off)
 @router.patch("/toggle-quiz/{quiz_id}")
 async def toggle_quiz(
     quiz_id: int,
@@ -275,7 +264,7 @@ async def toggle_quiz(
     await db.commit()
     return {"message": f"Quiz {quiz_id} is now {'active' if quiz.is_active else 'inactive'}."}
 
-
+# List all non-admin users with basic info
 @router.get("/users")
 async def list_users(
     db: AsyncSession = Depends(get_db),
@@ -288,7 +277,7 @@ async def list_users(
         for u in users
     ]
 
-
+# List latest quiz submissions (limit defaults to 5)
 @router.get("/submissions")
 async def list_submissions(
     limit: int = 5,
@@ -321,7 +310,7 @@ async def list_submissions(
     ]
 
 
-
+# Show quiz attempt status: total assigned, attempted, and pending users
 @router.get("/quiz-status/{quiz_id}")
 async def get_quiz_status(quiz_id: int, db: AsyncSession = Depends(get_db)):
     try:
@@ -372,7 +361,7 @@ async def get_quiz_status(quiz_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-
+# Send follow-up reminder emails to users who haven't attempted the quiz
 @router.post("/send-followup-email/{quiz_id}")
 async def send_followup_email(
     quiz_id: int,
@@ -406,6 +395,7 @@ async def send_followup_email(
         print("🔥 Error sending follow-up emails:", repr(e))
         raise HTTPException(status_code=500, detail="Failed to send emails.")
 
+# Export quiz user data (attempted + pending) to Excel with scores & GPA
 @router.get("/export-users")
 async def export_users_to_excel(quiz_id: int, session: AsyncSession = Depends(get_db)):
     # Fetch quiz title
@@ -500,6 +490,7 @@ async def export_users_to_excel(quiz_id: int, session: AsyncSession = Depends(ge
     )
 
 
+# Export leaderboard data for a quiz to Excel (sorted by score)
 @router.get("/export-leaderboard")
 async def export_leaderboard_to_excel(quiz_id: int, session: AsyncSession = Depends(get_db)):
     # Get quiz title
@@ -568,7 +559,7 @@ async def export_leaderboard_to_excel(quiz_id: int, session: AsyncSession = Depe
     )
 
 
-
+# Get feedback submitted by users for quizzes (optional filter by quiz_id)
 @router.get("/feedbacks")
 async def get_feedbacks(
     quiz_id: int = Query(None),  # Optional query parameter
@@ -589,7 +580,7 @@ async def get_feedbacks(
         .order_by(Feedback.id.desc())
     )
 
-    # ✅ Filter by quiz_id if provided
+    # Filter by quiz_id if provided
     if quiz_id is not None:
         query = query.where(Feedback.quiz_id == quiz_id)
 

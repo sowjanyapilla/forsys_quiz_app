@@ -1,29 +1,40 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+# FastAPI and dependency tools
+from fastapi import APIRouter, Depends, HTTPException, status, APIRouter, Depends, HTTPException, Form, Request
+
+# Auth & JWT-related
 from fastapi.security import OAuth2PasswordRequestForm
+from jose import jwt
+
+# Database & ORM
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from datetime import timedelta
-from jose import jwt
+
+# Email sending
+from fastapi_mail import MessageSchema
+
+# Utilities & Config
+from datetime import timedelta, datetime, timezone
+import uuid
 from app import models
 from app.schemas.user import UserCreate, UserOut
 from app.config import SECRET_KEY, ALGORITHM
 from app.utils import auth
 from app.database import get_db
-from fastapi import APIRouter, Depends, HTTPException, Form, Request
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from fastapi_mail import MessageSchema
-from datetime import datetime, timedelta, timezone
-import uuid
-
+from app.email import fast_mail
 from app.models.user import User
 from app.models.password_reset_token import PasswordResetToken
-from app.email import fast_mail
+
+
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
+# Prefix all routes with "/auth" and tag them as "Authentication"
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
+
+# - Registers a new user if employee ID is not already taken
+# - Hashes password
+# - Stores user in DB with is_admin=False
 @router.post("/signup", response_model=UserOut)
 async def signup(user: UserCreate, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(models.User).where(models.User.employee_id == user.employee_id))
@@ -44,6 +55,11 @@ async def signup(user: UserCreate, db: AsyncSession = Depends(get_db)):
     await db.refresh(new_user)
     return new_user
 
+
+# - Logs user in using email and password (OAuth2PasswordRequestForm)
+# - Verifies credentials
+# - Generates JWT token (30 min expiry)
+# - Returns token and user info
 @router.post("/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(models.User).where(models.User.email == form_data.username))
@@ -74,6 +90,10 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
     }
 
 
+# - Sends a password reset link to user's email
+# - Generates unique token (UUID)
+# - Saves it to DB with 30-min expiration
+# - Sends an email with a reset link
 @router.post("/forgot-password")
 async def forgot_password(request: Request, email: str = Form(...), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == email))
@@ -106,6 +126,11 @@ async def forgot_password(request: Request, email: str = Form(...), db: AsyncSes
 
     return {"message": "Password reset link sent to your email"}
 
+
+# - Resets password using a valid reset token
+# - Verifies token is valid and not expired
+# - Updates user password (hashed)
+# - Deletes token after use
 @router.post("/reset-password")
 async def reset_password(token: str = Form(...), new_password: str = Form(...), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(PasswordResetToken).where(PasswordResetToken.token == token))

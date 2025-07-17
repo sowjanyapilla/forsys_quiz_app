@@ -127,3 +127,55 @@ const Login = () => {
 };
 
 export default Login;
+
+
+
+// // src/pages/Login.tsx
+// import { useEffect } from 'react';
+// import { useAuth } from '@/contexts/AuthContext';
+// import { useNavigate } from 'react-router-dom';
+// import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+// const Login = () => {
+//   const { isAuthenticated, isAdmin } = useAuth();
+//   const navigate = useNavigate();
+
+//   useEffect(() => {
+//     if (isAuthenticated) {
+//       // Redirect based on role
+//       navigate(isAdmin ? '/admin' : '/dashboard');
+//     }
+//   }, [isAuthenticated, isAdmin, navigate]);
+
+//   const handleGoogleLogin = () => {
+//     // Redirect to FastAPI backend OAuth route
+//     window.location.href = 'http://127.0.0.1:8000/auth/login';
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center px-4">
+//       <Card className="w-full max-w-md">
+//         <CardHeader className="space-y-1">
+//           <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+//             Welcome to Forsys Quiz
+//           </CardTitle>
+//         </CardHeader>
+//         <CardContent className="flex flex-col items-center">
+//           <button
+//             onClick={handleGoogleLogin}
+//             className="bg-white border border-gray-300 text-black py-2 px-4 rounded hover:bg-gray-100 transition-all flex items-center gap-2"
+//           >
+//             <img
+//               src="https://developers.google.com/identity/images/g-logo.png"
+//               alt="Google"
+//               className="h-5 w-5"
+//             />
+//             Sign in with Google
+//           </button>
+//         </CardContent>
+//       </Card>
+//     </div>
+//   );
+// };
+
+// export default Login;

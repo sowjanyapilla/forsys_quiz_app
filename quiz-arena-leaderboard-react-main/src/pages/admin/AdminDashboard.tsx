@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { toast } from '@/hooks/use-toast';
+import { useNavigate } from "react-router-dom";
+
 
 interface Quiz {
   id: number;
@@ -32,6 +34,7 @@ const API_BASE_URL = "http://localhost:8000";
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [recentSubmissions, setRecentSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -151,9 +154,17 @@ const AdminDashboard = () => {
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Button onClick={logout} variant="outline" className="dark:border-gray-600 dark:text-white dark:hover:bg-gray-700">
-              Logout
-            </Button>
+            <Button
+  onClick={() => {
+    logout();         // Clear token and user
+    navigate("/");    // Redirect to homepage
+  }}
+  variant="outline"
+  className="dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
+>
+  Logout
+</Button>
+
           </div>
         </div>
       </header>

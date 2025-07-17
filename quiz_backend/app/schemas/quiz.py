@@ -10,8 +10,8 @@ class QuizBase(BaseModel):
     time_limit: int
     questions: List[Question]  # This is the list of Question objects
     is_active: Optional[bool] = Field(default=False)
-    source_quiz_id: Optional[int] = None   # ✅ new
-    active_till: Optional[date] = None     # ✅ new
+    source_quiz_id: Optional[int] = None  
+    active_till: Optional[date] = None     
 
 class QuizCreate(QuizBase):
     pass

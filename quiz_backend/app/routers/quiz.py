@@ -1,16 +1,18 @@
+# FastAPI and SQLAlchemy imports
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
-from ..database import get_db
+from datetime import datetime, timezone
+import traceback
+
+# Internal imports
+from ..database import get_db    # Dependency to get DB session
 from ..models.quiz import Quiz
 from ..schemas.quiz import QuizCreate, QuizOut, QuizAssignedOut
-from ..dependencies import get_current_user
+from ..dependencies import get_current_user     # Auth dependency
 from ..models.submission import Submission
-from datetime import datetime, timezone
 from ..models.question import Question
-from sqlalchemy import select, join
-from ..models.quiz import Quiz
 from ..models.quiz_access import QuizAccess
 from ..schemas.feedback import FeedbackCreate
 from ..models.feedback import Feedback
@@ -18,8 +20,10 @@ from ..models.user import User
 from ..schemas.submission import SubmissionCreate, SubmissionUpdate
 
 
+# Router definition
 router = APIRouter(prefix="/quizzes", tags=["quizzes"])
 
+#for manually created quiz(not automated)
 @router.post("/", response_model=QuizOut)
 async def create_quiz(quiz: QuizCreate, db: AsyncSession = Depends(get_db)):
     db_quiz = Quiz(
@@ -43,7 +47,7 @@ async def create_quiz(quiz: QuizCreate, db: AsyncSession = Depends(get_db)):
         ]
     )
 
-
+#public list of all quizes
 @router.get("/", response_model=list[QuizOut])
 async def list_quizzes(db: AsyncSession = Depends(get_db)):
     now = datetime.now(timezone.utc)
@@ -52,14 +56,18 @@ async def list_quizzes(db: AsyncSession = Depends(get_db)):
     quiz_out_list = []
     for quiz in quizzes:
 
+        # Deactivate expired quizzes
         if quiz.active_till and quiz.active_till < now and quiz.is_active:
             quiz.is_active = False
             db.add(quiz)
 
+        # Ensure questions are deserialized
         questions_data = quiz.questions_json
         if isinstance(questions_data, str):
             import json
             questions_data = json.loads(questions_data)
+        
+        # Build response list
         quiz_out_list.append(
             QuizOut(
                 id=quiz.id,
@@ -78,6 +86,7 @@ async def list_quizzes(db: AsyncSession = Depends(get_db)):
     return quiz_out_list
 
 
+#toggle functionality before adding active date functionality
 @router.patch("/{quiz_id}/toggle")
 async def toggle_quiz(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Quiz).where(Quiz.id == quiz_id))
@@ -88,9 +97,11 @@ async def toggle_quiz(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
     await db.commit()
     return {"status": "success", "is_active": quiz.is_active}
 
+
+#showing assigned quizzes with status
 @router.get("/assigned", response_model=list[QuizAssignedOut])
 async def assigned_quizzes(user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    # get all active quizzes assigned to this user
+    #Get quizzes assigned to user
     stmt = (
         select(Quiz)
         .join(QuizAccess, QuizAccess.quiz_id == Quiz.id)
@@ -100,12 +111,13 @@ async def assigned_quizzes(user=Depends(get_current_user), db: AsyncSession = De
     result = await db.execute(stmt)
     quizzes = result.scalars().all()
 
-    # get submission quiz_ids attempted by this user
+    # Get previously attempted quizzes
     attempted = await db.execute(
         select(Submission.quiz_id).where(Submission.user_id == user.id)
     )
     attempted_ids = {row[0] for row in attempted.all()}
 
+    # Build response list with attempt status
     result_list = []
     for quiz in quizzes:
         result_list.append({
@@ -140,51 +152,8 @@ async def get_quiz(quiz_id: int, db: AsyncSession = Depends(get_db)):
         ]
     )
 
-# @router.post("/{quiz_id}/submit")
-# async def submit_quiz(
-#     quiz_id: int, 
-#     #submission: dict, 
-#     submission: SubmissionCreate,
-#     user=Depends(get_current_user), 
-#     db: AsyncSession = Depends(get_db)
-# ):
-#     result = await db.execute(select(Quiz).where(Quiz.id == quiz_id))
-#     quiz = result.scalar_one_or_none()
 
-#     if not quiz:
-#         raise HTTPException(status_code=404, detail="Quiz not found")
-
-#     # new_sub = Submission(
-#     #     user_id=user.id,
-#     #     quiz_id=quiz.id,
-#     #     answers=submission.answers, 
-#     #     score=submission.get("score"),
-#     #     correct_count=submission.get("correct_count"),
-#     #     incorrect_count=submission.get("incorrect_count"),
-#     #     not_attempted_count=submission.get("not_attempted_count"),
-#     #     time_taken=submission.get("time_taken", 0),  # ✅ fix time
-#     #     submitted_at=datetime.utcnow()
-#     # )
-
-#     new_sub = Submission(
-#         user_id=user.id,
-#         quiz_id=quiz.id,
-#         answers=submission.answers,
-#         score=submission.score,
-#         correct_count=submission.correct_count,
-#         incorrect_count=submission.incorrect_count,
-#         not_attempted_count=submission.not_attempted_count,
-#         time_taken=submission.time_taken,
-#         submitted_at=datetime.utcnow()
-#     )
-#     db.add(new_sub)
-#     await db.commit()
-
-#     return {"status": "success", "message": "Quiz submitted successfully"}
-
-from fastapi import HTTPException
-import traceback
-
+#for submission update
 @router.post("/{quiz_id}/submit")
 async def submit_quiz(quiz_id: int, submission: SubmissionUpdate, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     try:
@@ -203,7 +172,7 @@ async def submit_quiz(quiz_id: int, submission: SubmissionUpdate, db: AsyncSessi
         if not sub:
             raise HTTPException(status_code=404, detail="Submission not found")
 
-        # Update fields
+        #Update submission fields
         sub.answers = submission.answers
         sub.score = submission.score
         sub.correct_count = submission.correct_count
@@ -213,13 +182,13 @@ async def submit_quiz(quiz_id: int, submission: SubmissionUpdate, db: AsyncSessi
         sub.started_at = submission.started_at
         sub.submitted_at = datetime.now(timezone.utc)
 
-        db.add(sub)  # 👈 Make sure to add this line
+        db.add(sub)  
         await db.commit()
         return {"message": "Submission recorded successfully."}
 
     except Exception as e:
         print("❌ Exception during quiz submission:")
-        traceback.print_exc()  # 👈 Logs full stack trace
+        traceback.print_exc()  # Logs full stack trace
         raise HTTPException(status_code=400, detail="Failed to submit quiz.")
 
 

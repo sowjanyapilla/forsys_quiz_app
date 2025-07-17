@@ -24,7 +24,7 @@ async def get_user_profile(user=Depends(get_current_user)):
         "is_admin": user.is_admin
     }
 
-
+# list of assigned quizzes
 @router.get("/quizzes")
 async def get_user_quizzes(
     user=Depends(get_current_user),

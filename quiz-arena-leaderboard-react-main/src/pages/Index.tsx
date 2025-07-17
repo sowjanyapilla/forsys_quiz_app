@@ -127,23 +127,37 @@ const Index = () => {
       </p>
 
       {/* Actions */}
-      <div className="flex gap-4">
-        <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg">
+      <div className="flex flex-col items-center gap-4">
+        {/* Google Login Button */}
+        <button
+          onClick={() => {
+            window.location.href = 'http://127.0.0.1:8000/auth/login';
+          }}
+          className="bg-white border border-gray-300 text-black py-2 px-6 rounded hover:bg-gray-100 transition-all flex items-center gap-2"
+        >
+          <img
+            src="https://developers.google.com/identity/images/g-logo.png"
+            alt="Google"
+            className="h-5 w-5"
+          />
+          Login with Google
+        </button>
+        {/* <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg">
           <Link to="/login">Login</Link>
         </Button>
         <Button asChild size="lg" variant="outline">
           <Link to="/signup">Sign Up</Link>
-        </Button>
+        </Button> */}
       </div>
 
-      {/* Footer CTA */}
+      {/* Footer CTA
       <div className="mt-12 bg-blue-600 text-white rounded-lg p-6 max-w-xl text-center shadow-md">
         <h2 className="text-2xl font-semibold mb-2">Ready to take the challenge?</h2>
         <p className="mb-4">Start now and see where you stand on the leaderboard!</p>
         <Button asChild variant="secondary" size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
           <Link to="/signup">Get Started</Link>
         </Button>
-      </div>
+      </div> */}
     </div>
   );
 };
