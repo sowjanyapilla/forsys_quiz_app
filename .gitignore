@@ -15,3 +15,7 @@ venv/
 # Others
 *.log
 
+# Ignore environment variables
+*.env
+
+
