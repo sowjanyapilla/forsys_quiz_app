@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => ({
     host: "127.0.0.1", // use IP instead of "::" to avoid ambiguity
     port: 8080,
     cors: {
-      origin: "http://127.0.0.1:8000", // your FastAPI backend
+      origin: "https://forsys-quiz-app.onrender.com", // your FastAPI backend
       credentials: true,              // required for session cookies
     },
   },
