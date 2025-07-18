@@ -52,7 +52,7 @@ const Submissions = () => {
     const loadQuizzes = async () => {
       try {
         setLoading(true);
-        const quizzesRes = await fetch("http://127.0.0.1:8000/quizzes");
+        const quizzesRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/quizzes`);
         const quizzesData = await quizzesRes.json();
         setQuizzes(quizzesData);
 
@@ -80,7 +80,7 @@ const Submissions = () => {
   const fetchSubmissions = async (quizId?: string) => {
     try {
       setLoading(true);
-      let url = "http://127.0.0.1:8000/submissions";
+      let url = `${import.meta.env.VITE_API_BASE_URL}/submissions`;
       if (quizId && quizId !== "all-quizzes") url += `?quiz=${quizId}`;
       const res = await fetch(url);
       const data = await res.json();
@@ -207,7 +207,7 @@ const Submissions = () => {
                 />
               </div>
               <div>
-                <label className="block mb-1 font-medium text-sm">Search</label>
+                <label className="block mb-1 font-medium text-sm">Search by quiz</label>
                 <Input
                   placeholder="Search by name or quiz"
                   value={filters.search}

@@ -19,7 +19,7 @@ const CreateQuiz = () => {
   const token = localStorage.getItem("quiz_token");
 
   const fetchQuizzes = async () => {
-    const res = await fetch("http://127.0.0.1:8000/admin/quiz-templates", {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/quiz-templates`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -27,7 +27,7 @@ const CreateQuiz = () => {
   };
 
   const fetchGroups = async () => {
-    const res = await fetch("http://127.0.0.1:8000/admin/groups", {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/groups`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -37,7 +37,7 @@ const CreateQuiz = () => {
   const handleCreateQuiz = async () => {
   if (!selectedQuizId || selectedGroups.length === 0) return;
 
-  const quizTemplateRes = await fetch(`http://127.0.0.1:8000/admin/quiz-template/${selectedQuizId}`, {
+  const quizTemplateRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/quiz-template/${selectedQuizId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -49,7 +49,7 @@ const CreateQuiz = () => {
     time_limit: timePerQuestion,
   }));
 
-  const createRes = await fetch("http://127.0.0.1:8000/admin/create-quiz", {
+  const createRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/create-quiz`, {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -76,7 +76,7 @@ const CreateQuiz = () => {
   const quizId = quizData.quiz_id;
 
   for (const groupId of selectedGroups) {
-    await fetch(`http://127.0.0.1:8000/admin/assign-quiz-to-group/${quizId}/${groupId}`, {
+    await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/assign-quiz-to-group/${quizId}/${groupId}`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -168,7 +168,7 @@ const CreateQuiz = () => {
               size="sm"
               variant="secondary"
               onClick={async () => {
-                const res = await fetch(`http://127.0.0.1:8000/admin/groups/${group.id}/members`, {
+                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/groups/${group.id}/members`, {
                   headers: { Authorization: `Bearer ${token}` },
                 });
                 const emails = await res.json();

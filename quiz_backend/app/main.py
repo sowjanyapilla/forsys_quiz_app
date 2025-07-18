@@ -51,8 +51,8 @@ print(f"[DEBUG] SESSION_SECRET = {SESSION_SECRET}")
 app.add_middleware(
     SessionMiddleware,
     secret_key=SESSION_SECRET,
-    same_site="lax",       # ✅ Required for CSRF protection
-    https_only=False,      # ✅ Keep False for local development
+    same_site="lax",       #  Required for CSRF protection
+    https_only=False,      # Keep False for local development
     session_cookie="session"
 )
 
@@ -72,7 +72,7 @@ app.add_middleware(
         "http://localhost:8080",
         "http://localhost:8000",
         "http://127.0.0.1:8000",
-        "http://127.0.0.1:8080",
+        "http://127.0.0.1:8080"
     ],
     allow_credentials=True,
     allow_methods=["*"],

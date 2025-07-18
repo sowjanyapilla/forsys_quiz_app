@@ -131,7 +131,7 @@ const Index = () => {
         {/* Google Login Button */}
         <button
           onClick={() => {
-            window.location.href = 'http://127.0.0.1:8000/auth/login';
+            window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/login`;
           }}
           className="bg-white border border-gray-300 text-black py-2 px-6 rounded hover:bg-gray-100 transition-all flex items-center gap-2"
         >

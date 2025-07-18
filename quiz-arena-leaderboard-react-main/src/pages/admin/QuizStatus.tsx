@@ -42,7 +42,7 @@ const QuizStatus = () => {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/admin/quiz-status/${quiz_id}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/quiz-status/${quiz_id}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("quiz_token")}`,
           },
@@ -78,7 +78,7 @@ const QuizStatus = () => {
 
   const handleExportToExcel = async () => {
   try {
-    const response = await fetch(`http://localhost:8000/admin/export-users?quiz_id=${quiz_id}`);
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/export-users?quiz_id=${quiz_id}`);
     const blob = await response.blob();
 
     let filename = "quiz_users_report.xlsx";
@@ -209,7 +209,7 @@ const QuizStatus = () => {
           className="bg-yellow-500 text-white hover:bg-yellow-600"
           onClick={async () => {
             try {
-              const res = await fetch(`http://localhost:8000/admin/send-followup-email/${quiz_id}`, {
+              const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/send-followup-email/${quiz_id}`, {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",

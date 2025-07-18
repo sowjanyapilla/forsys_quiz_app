@@ -17,7 +17,7 @@ export const CreateGroupModal = ({ onClose, onGroupCreated }: CreateGroupModalPr
   useEffect(() => {
     const fetchUsers = async () => {
       const token = localStorage.getItem("quiz_token");
-      const res = await fetch("http://127.0.0.1:8000/admin/users", {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -50,7 +50,7 @@ export const CreateGroupModal = ({ onClose, onGroupCreated }: CreateGroupModalPr
 
     try {
       const token = localStorage.getItem("quiz_token");
-      const res = await fetch("http://127.0.0.1:8000/admin/create-group", {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/create-group`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -59,7 +59,7 @@ const QuizLeaderboard = () => {
   const fetchQuizData = async () => {
     try {
       const quizId = parseInt(id); // Ensure the quiz ID is a number
-      const data = await fetchData(`http://localhost:8000/quizzes/${quizId}`);
+      const data = await fetchData(`${import.meta.env.VITE_API_BASE_URL}/quizzes/${quizId}`);
       setQuiz(data);
       await fetchLeaderboard(); // Fetch leaderboard after loading quiz data
     } catch (error) {
@@ -73,7 +73,7 @@ const QuizLeaderboard = () => {
   const fetchLeaderboard = async () => {
     try {
       const quizId = parseInt(id); // Ensure the quiz ID is a number
-      const data = await fetchData(`http://localhost:8000/quizzes/${quizId}/leaderboard`);
+      const data = await fetchData(`${import.meta.env.VITE_API_BASE_URL}/quizzes/${quizId}/leaderboard`);
       setLeaderboard(data);
     } catch (error) {
       console.error("Failed to fetch leaderboard:", error);
@@ -142,7 +142,7 @@ const QuizLeaderboard = () => {
       className="bg-green-600 text-white hover:bg-green-700"
       onClick={async () => {
         try {
-          const res = await fetch(`http://localhost:8000/admin/export-leaderboard?quiz_id=${quiz.id}`);
+          const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/export-leaderboard?quiz_id=${quiz.id}`);
           if (!res.ok) throw new Error("Failed to export leaderboard");
 
           const blob = await res.blob();

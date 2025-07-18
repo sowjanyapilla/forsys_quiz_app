@@ -30,7 +30,7 @@ interface Submission {
   submitted_at: string;
 }
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();

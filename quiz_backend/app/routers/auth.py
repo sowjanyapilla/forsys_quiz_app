@@ -23,10 +23,12 @@ from app.database import get_db
 from app.email import fast_mail
 from app.models.user import User
 from app.models.password_reset_token import PasswordResetToken
-
+import os
 
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+FRONTEND_URL = os.getenv("FRONTEND_URL")
 
 # Prefix all routes with "/auth" and tag them as "Authentication"
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -112,7 +114,7 @@ async def forgot_password(request: Request, email: str = Form(...), db: AsyncSes
     await db.commit()
 
     # Create reset link
-    reset_link = f"http://localhost:8080/reset-password/{token}"
+    reset_link = f"{FRONTEND_URL}/reset-password/{token}"
 
     # Compose email
     message = MessageSchema(

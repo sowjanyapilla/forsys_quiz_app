@@ -69,7 +69,7 @@ const TakeQuiz = () => {
   useEffect(() => {
     const fetchQuiz = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/quizzes/${id}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/quizzes/${id}`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -94,7 +94,7 @@ const TakeQuiz = () => {
   const handleStartQuiz = async () => {
     try {
       await document.documentElement.requestFullscreen();
-      const res = await fetch(`http://localhost:8000/submissions/start/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/submissions/start/${id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -130,7 +130,7 @@ const TakeQuiz = () => {
       const timeTaken = (Date.now() - startTime) / 1000;
       const adjustedAnswers = Object.fromEntries(Object.entries(answers).map(([k, v]) => [k, v + 1]));
 
-      const res = await fetch(`http://localhost:8000/quizzes/${id}/submit`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/quizzes/${id}/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -369,7 +369,7 @@ const TakeQuiz = () => {
               <Button variant="ghost" onClick={() => navigate(`/quiz/${quiz.id}/leaderboard`)}>Skip</Button>
               <Button onClick={async () => {
                 try {
-                  await fetch("http://localhost:8000/quizzes/submit-feedback", {
+                  await fetch(`${import.meta.env.VITE_API_BASE_URL}/quizzes/submit-feedback`, {
                     method: "POST",
                     headers: {
                       "Content-Type": "application/json",

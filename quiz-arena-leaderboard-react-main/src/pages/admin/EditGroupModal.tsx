@@ -19,7 +19,7 @@ export const EditGroupModal: React.FC<EditGroupModalProps> = ({
 
   const fetchUsers = async () => {
     const token = localStorage.getItem("quiz_token");
-    const res = await fetch("http://127.0.0.1:8000/admin/users", {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/users`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const users = await res.json();
@@ -82,7 +82,7 @@ export const EditGroupModal: React.FC<EditGroupModalProps> = ({
   const handleUpdateGroup = async () => {
     const token = localStorage.getItem("quiz_token");
     const res = await fetch(
-      `http://127.0.0.1:8000/admin/groups/${group.id}/members`,
+      `${import.meta.env.VITE_API_BASE_URL}/admin/groups/${group.id}/members`,
       {
         method: "PUT",
         headers: {

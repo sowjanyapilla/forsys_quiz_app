@@ -12,7 +12,7 @@ class User(Base):
     employee_id = Column(String, unique=True, nullable=False, index = True)
     full_name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
-    password_hash = Column(String, nullable=False)
+    password_hash = Column(String, nullable=True)
     is_admin = Column(Boolean, default=False)
 
     

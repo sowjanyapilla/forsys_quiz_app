@@ -33,7 +33,7 @@ const UserDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem("quiz_token");
-      const response = await fetch("http://localhost:8000/quizzes/assigned", {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/quizzes/assigned`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
