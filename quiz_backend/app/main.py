@@ -68,7 +68,7 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-       "https://quiz-fronted.onrender.com/"
+       "https://quiz-fronted.onrender.com"
     ],
     allow_credentials=True,
     allow_methods=["*"],
