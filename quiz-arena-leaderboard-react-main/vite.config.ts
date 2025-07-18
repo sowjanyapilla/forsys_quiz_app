@@ -37,12 +37,8 @@ import path from "path";
 
 export default defineConfig({
   server: {
-    host: "127.0.0.1", // use IP instead of "::" to avoid ambiguity
-    port: 8080,
-    cors: {
-      origin: "http://127.0.0.1:8000", // your FastAPI backend
-      credentials: true,              // required for session cookies
-    },
+    host: "0.0.0.0",  // ✅ this is required for Render
+    port: 8080,       // ✅ this should match Render’s expected port
   },
   plugins: [react()],
   resolve: {
