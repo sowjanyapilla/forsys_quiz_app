@@ -51,7 +51,7 @@ print(f"[DEBUG] SESSION_SECRET = {SESSION_SECRET}")
 app.add_middleware(
     SessionMiddleware,
     secret_key=SESSION_SECRET,
-    same_site="lax",       #  Required for CSRF protection
+    same_site="none",       #  Required for CSRF protection
     https_only=True,      # Keep False for local development
     session_cookie="session"
 )
